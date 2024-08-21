@@ -17,7 +17,7 @@ const getAllUsersData = async () => {
     };
     while (moreDataAvailable) {
       const { data, error } = await supabase
-        .from("customer")
+        .from("user")
         .select("*")
         .range(from, to);
 
@@ -76,7 +76,7 @@ const getAllFraudData = async () => {
 
     while (moreDataAvailable) {
       const { data, error } = await supabase
-        .from("customer")
+        .from("user")
         .select("*")
         .eq("fraud", 1)
         .range(from, to);
@@ -104,6 +104,7 @@ const getAllFraudData = async () => {
 
 const suggestionInsert = async ({ id, suggestion }) => {
   try {
+    console.log("suggestion", suggestion);
     const { error } = await supabase
       .from("suggestions")
       .insert({ id: id, suggestion: suggestion });
