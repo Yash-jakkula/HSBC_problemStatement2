@@ -15,7 +15,7 @@ const getAllData = async (req, res) => {
 
 const getGenderSpecificData = async (req, res) => {
   try {
-    const { female: data, femaleError: error } = await supabase
+    const { data: female, error: femaleError } = await supabase
       .from("customer")
       .select("*")
       .eq("F");
@@ -87,10 +87,27 @@ const getMystockPrices = async (req, res) => {
   }
 };
 
+const getSuggestedStock = async (req, res) => {
+  try {
+    const amount = req.params.amount;
+    const { data, error } = await supabase
+      .from("stockprice")
+      .select("*")
+      .gte("stock", amount || 0);
+    if (error) {
+      return res.status(500).json({ error });
+    }
+    return res.status(200).json(amount);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
 module.exports = {
   getAllData,
   getGenderSpecificData,
   getAmountWithFilter,
   getStockInvestiment,
   getMystockPrices,
+  getSuggestedStock,
 };

@@ -5,6 +5,7 @@ const {
   getAmountWithFilter,
   getStockInvestiment,
   getMystockPrices,
+  getSuggestedStock,
 } = require("../controllers/user");
 const userrouter = express.Router();
 
@@ -18,4 +19,5 @@ userrouter.get("/getstockprice", getStockInvestiment);
 
 userrouter.get("/getmystock", getMystockPrices);
 
+userrouter.get("/getsuggestedstock", getSuggestedStock);
 module.exports = userrouter;
