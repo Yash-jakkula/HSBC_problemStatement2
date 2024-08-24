@@ -20,7 +20,7 @@ const mongoose = require("mongoose");
 const db = async () => {
   try {
     const data = await mongoose.connect(
-      "mongodb+srv://21eg105h21:yash7640@cluster0.iz8qnim.mongodb.net/HSBC?retryWrites=true&w=majority&appName=Cluster0"
+      "mongodb+srv://21eg105h21:@cluster0.iz8qnim.mongodb.net/HSBC?retryWrites=true&w=majority&appName=Cluster0"
     );
     return data;
   } catch (err) {
