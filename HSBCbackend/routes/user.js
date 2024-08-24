@@ -6,18 +6,26 @@ const {
   getStockInvestiment,
   getMystockPrices,
   getSuggestedStock,
+  updateFormat,
+  getUserById,
 } = require("../controllers/user");
+const advanceResult = require("../midllewares/advanceResults");
+const userModel = require("../models/customer");
 const userrouter = express.Router();
 
 userrouter.get("/alldata", getAllData);
 
-userrouter.get("/genderSpecific", getGenderSpecificData);
+userrouter.get(
+  "/genderSpecific/:gender",
 
-userrouter.get("/getamountfilter/:amount", getAmountWithFilter);
+  getGenderSpecificData
+);
+
+userrouter.get("/getuser", getUserById);
+
+userrouter.get("/getamountfilter", getAmountWithFilter);
 
 userrouter.get("/getstockprice", getStockInvestiment);
 
-userrouter.get("/getmystock", getMystockPrices);
-
-userrouter.get("/getsuggestedstock", getSuggestedStock);
+userrouter.put("/updateformat", updateFormat);
 module.exports = userrouter;

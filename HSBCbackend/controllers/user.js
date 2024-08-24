@@ -1,11 +1,22 @@
-const supabase = require("../config/db");
-
+const userModel = require("../models/customer");
+// const supabase = require("../config/db");
 const getAllData = async (req, res) => {
   try {
-    const { data, error } = await supabase.from("customer").select("*");
-
-    if (error) {
-      return res.status(500).send({ error });
+    const { fraud, page = 1, limit = 10 } = req.query;
+    const fraudVal = parseInt(fraud);
+    let data = [];
+    if (fraudVal === 1 || fraudVal === 0)
+      data = await userModel
+        .find({ fraud: fraudVal })
+        .skip((page - 1) * limit)
+        .limit(limit);
+    else
+      data = await userModel
+        .find()
+        .skip((page - 1) * limit)
+        .limit(limit);
+    if (!data) {
+      return res.status(500).send({ data });
     }
     return res.status(200).send({ len: data.length, data });
   } catch (err) {
@@ -13,31 +24,39 @@ const getAllData = async (req, res) => {
   }
 };
 
+const updateFormat = async (req, res) => {
+  try {
+    const result = await userModel.updateMany(
+      { gender: "'F'" },
+      { $set: { gender: "F" } }
+    );
+    if (!result) {
+      return res.status(200).json({ result });
+    }
+    return res.status(200).json({ message: "updated succefully" });
+  } catch (err) {
+    console.error(err);
+  }
+};
+
 const getGenderSpecificData = async (req, res) => {
   try {
-    const { data: female, error: femaleError } = await supabase
-      .from("customer")
-      .select("*")
-      .eq("F");
+    const { page } = req.query;
+    const offset = (page - 1) * 100;
 
-    // const { data: male, error: MaleError } = await supabase
-    //   .from("user")
-    //   .select("*")
-    //   .eq("gender", "M");
-
-    if (femaleError) {
-      return res.status(500).send({ femaleError });
+    if (req.params.gender) {
+      const data = await userModel
+        .find({ gender: req.params.gender })
+        .skip(offset)
+        .limit(100);
+      if (!data) {
+        return res.status(500).send({ femaleError });
+      }
+      return res.status(200).json({
+        data,
+      });
     }
-
-    // if (MaleError) {
-    //   return res.status(500).send({ error });
-    // }
-    return res.status(200).json({
-      //   maleLength: male.length,
-      femaleLength: female.length,
-      //   male: male,
-      female: female,
-    });
+    return res.status(400).json({ message: "bad request" });
   } catch (err) {
     console.error(err);
   }
@@ -45,15 +64,52 @@ const getGenderSpecificData = async (req, res) => {
 
 const getAmountWithFilter = async (req, res) => {
   try {
-    const amount = req.params.amount;
-    const { data, error } = await supabase
-      .from("user")
-      .select("*")
-      .gte("amount", amount);
-    if (error) {
-      return res.status(500).json({ error });
+    const { low, high, page = 1, limit = 10 } = req.query;
+
+    const lowValue = parseFloat(low);
+    const highValue = parseFloat(high);
+    const pageValue = parseInt(page, 10);
+    const limitValue = parseInt(limit, 10);
+    const offset = (pageValue - 1) * limitValue;
+
+    if (
+      isNaN(lowValue) ||
+      isNaN(highValue) ||
+      isNaN(pageValue) ||
+      isNaN(limitValue)
+    ) {
+      return res.status(400).json({ error: "Invalid query parameters" });
     }
+
+    const data = await userModel
+      .find({ amount: { $gte: lowValue, $lt: highValue } })
+      .skip(offset)
+      .limit(limitValue);
+
+    if (data.length === 0) {
+      return res.status(404).json({ message: "No data found" });
+    }
+
     return res.status(200).json({ data });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+const getUserById = async (req, res) => {
+  try {
+    const { cid, fraud } = req.query;
+    const fraudVal = parseInt(fraud);
+    let data = [];
+    if (fraudVal === 1 || fraudVal === 0)
+      data = await userModel.find({ customer: cid, fraud: fraudVal });
+    else data = await userModel.find({ customer: cid });
+
+    if (!data) {
+      return res.status(404).json({ message: "cannot find customer" });
+    }
+    return res.status(200).json(data);
   } catch (err) {
     console.error(err);
   }
@@ -61,7 +117,6 @@ const getAmountWithFilter = async (req, res) => {
 
 const getStockInvestiment = async (req, res) => {
   try {
-    // replace the "demo" apikey below with your own key from https://www.alphavantage.co/support/#api-key
     var url =
       "https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=IBM&interval=5min&apikey=KLXV7ES2SA9UGQZG";
     const data = await fetch(url, {
@@ -75,39 +130,11 @@ const getStockInvestiment = async (req, res) => {
   }
 };
 
-const getMystockPrices = async (req, res) => {
-  try {
-    const { data, error } = await supabase.from("stockprice").select("*");
-    if (error) {
-      return res.status(500).json({ error });
-    }
-    return res.status(200).json({ data });
-  } catch (err) {
-    console.error(err);
-  }
-};
-
-const getSuggestedStock = async (req, res) => {
-  try {
-    const amount = req.params.amount;
-    const { data, error } = await supabase
-      .from("stockprice")
-      .select("*")
-      .gte("stock", amount || 0);
-    if (error) {
-      return res.status(500).json({ error });
-    }
-    return res.status(200).json(amount);
-  } catch (err) {
-    console.error(err);
-  }
-};
-
 module.exports = {
   getAllData,
+  getUserById,
   getGenderSpecificData,
   getAmountWithFilter,
   getStockInvestiment,
-  getMystockPrices,
-  getSuggestedStock,
+  updateFormat,
 };
